@@ -14,7 +14,7 @@ extern crate clap;
 extern crate error_chain;
 
 extern crate rusty_secrets;
-use rusty_secrets::*;
+use rusty_secrets::sss;
 
 #[macro_use]
 mod verbose;
@@ -65,20 +65,22 @@ fn run() -> Result<()> {
         let share_tmpl = matches.value_of("share-tmpl").unwrap_or("share_{{num}}");
         let verbose = matches.is_present("verbose");
         // let mime = matches.value_of("MIME");
-        // let sign = matches.is_present("sign");
+        let sign_shares = matches.is_present("sign");
 
-        // split(secret_input, output_path, k, n, mime, sign, verbose)?
-        split(secret_input, output_path, k, n, share_tmpl, verbose)?
-    } else if let Some(matches) = matches.subcommand_matches("recover") {
+        split(secret_input, output_path, k, n, sign_shares, share_tmpl, verbose)?
+    }
+    else if let Some(matches) = matches.subcommand_matches("recover") {
         let shares = matches
             .values_of("SHARES")
             .unwrap()
             .map(Path::new)
             .collect();
+
         let output_path = matches.value_of("FILE").map(Path::new);
+        let verify_signatures = matches.is_present("verify");
         let verbose = matches.is_present("verbose");
 
-        recover(shares, output_path, verbose)?
+        recover(shares, output_path, verify_signatures, verbose)?
     }
 
     Ok(())
@@ -89,9 +91,9 @@ fn split(
     output_path: &Path,
     k: u8,
     n: u8,
-    share_tmpl: &str,
     // mime: Option<&str>,
-    // sign: bool,
+    sign_shares: bool,
+    share_tmpl: &str,
     verbose: bool,
 ) -> Result<()> {
     if k > n {
@@ -109,7 +111,7 @@ fn split(
 
     verbose!(verbose, "Generating shares... ");
 
-    let shares = generate_shares(k, n, &secret)
+    let shares = sss::generate_shares(k, n, &secret, sign_shares)
         .chain_err(|| "Could not generate shares")?;
 
     for (num, share) in shares.iter().enumerate() {
@@ -130,7 +132,7 @@ fn split(
     Ok(())
 }
 
-fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verbose: bool) -> Result<()> {
+fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verify_signatures: bool, verbose: bool) -> Result<()> {
     let mut shares = Vec::with_capacity(shares_paths.len());
 
     for share_path in shares_paths {
@@ -158,7 +160,7 @@ fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verbose: bool) 
 
     verbose!(verbose, "Recovering secret... ");
 
-    let secret = recover_secret(shares)
+    let secret = sss::recover_secret(shares, verify_signatures)
         .chain_err(|| ErrorKind::CannotRecoverSecret)?;
 
     match output_path {
