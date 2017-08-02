@@ -8,7 +8,6 @@ extern crate colored;
 use colored::*;
 
 extern crate clap;
-use clap::{App, AppSettings, Arg, SubCommand};
 
 #[macro_use]
 extern crate error_chain;
@@ -25,6 +24,9 @@ use errors::*;
 
 mod input;
 use input::Input;
+
+mod app;
+use app::app;
 
 mod validators;
 
@@ -51,74 +53,7 @@ fn main() {
 }
 
 fn run() -> Result<()> {
-    let app =
-        App::new("RustSecrets CLI")
-            .version("0.1")
-            .author("SpinResearch")
-            .about("Split a secret of an arbitrary length in n different shares and k-out-of-n shares are required to recover it.")
-            .setting(AppSettings::SubcommandRequiredElseHelp)
-            .arg(Arg::with_name("verbose")
-                 .short("v")
-                 .long("verbose")
-                 .help("Enable verbose mode"))
-            .subcommand(SubCommand::with_name("split")
-                        .about("Split a secret into shares")
-                        .arg(Arg::with_name("k")
-                             .short("k")
-                             .required(true)
-                             .takes_value(true)
-                             .validator(validators::num::strictly_positive)
-                             .help("Number of shares necessary to recover the secret"))
-                        .arg(Arg::with_name("n")
-                             .short("n")
-                             .required(true)
-                             .takes_value(true)
-                             .validator(validators::num::strictly_positive)
-                             .help("Total number of generated shares"))
-                        .arg(Arg::with_name("DIR")
-                             .short("o")
-                             .long("output")
-                             .required(true)
-                             .takes_value(true)
-                             .validator(validators::fs::directory)
-                             .help("Path to the directory to output the shares to"))
-                        // .arg(Arg::with_name("MIME")
-                        //      .short("m")
-                        //      .long("mime")
-                        //      .takes_value(true)
-                        //      .validator(validators::mime)
-                        //      .help("The MIME type of the secret"))
-                        // .arg(Arg::with_name("sign")
-                        //      .short("s")
-                        //      .long("sign")
-                        //      .help("Sign the shares"))
-                        .arg(Arg::with_name("INPUT")
-                             .required(true)
-                             .validator(validators::fs::file_or_stdin)
-                             .help("Path to the file containing the secret to split, or - to read from stdin")))
-            .subcommand(SubCommand::with_name("recover")
-                        .about("Recover the secret from the shares")
-                        .arg(Arg::with_name("SHARES")
-                             .required(true)
-                             .takes_value(true)
-                             .multiple(true)
-                             .validator(validators::fs::file)
-                             .help("Paths to shares to recover the secret from"))
-                        // .arg(Arg::with_name("MIME")
-                        //      .short("m")
-                        //      .long("mime")
-                        //      .help("Print the MIME type of the secret on stderr"))
-                        // .arg(Arg::with_name("verify")
-                        //      .short("v")
-                        //      .long("verify")
-                        //      .help("Verify the shares signatures")));
-                        .arg(Arg::with_name("FILE")
-                             .short("o")
-                             .long("output")
-                             .takes_value(true)
-                             .help("Path to file to output the secret to, prints to stdout if omitted")));
-
-    let matches = app.get_matches();
+    let matches = app().get_matches();
 
     let verbose = matches.is_present("verbose");
 

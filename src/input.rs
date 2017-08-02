@@ -2,7 +2,6 @@
 // https://gist.github.com/ayosec/2ee0993247e003b42c5c
 
 use std::{env, fs, io};
-use std::io::prelude::*;
 
 pub enum Input {
     Standard(io::Stdin),
