@@ -26,6 +26,12 @@ pub fn build_cli() -> App<'static, 'static> {
                          .takes_value(true)
                          .validator(validators::num::strictly_positive)
                          .help("Total number of generated shares"))
+                    .arg(Arg::with_name("share-tmpl")
+                         .short("t")
+                         .long("share-tmpl")
+                         .takes_value(true)
+                         .validator(validators::rusty_secrets::share_tmpl)
+                         .help("Template for the share names. Defaults to 'share_{{num}}'"))
                     .arg(Arg::with_name("DIR")
                          .short("o")
                          .long("output")
@@ -77,6 +83,18 @@ pub fn build_cli() -> App<'static, 'static> {
 
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 pub mod validators {
+
+    pub mod rusty_secrets {
+
+        pub fn share_tmpl(value: String) -> Result<(), String> {
+            if !value.contains("{{num}}") {
+                return Err("Invalid share template, must contain '{[num]}'".to_string());
+            }
+
+            Ok(())
+        }
+
+    }
 
     pub mod num {
 
