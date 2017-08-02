@@ -1,3 +1,6 @@
+
+extern crate mime;
+
 extern crate clap;
 use clap::Shell;
 

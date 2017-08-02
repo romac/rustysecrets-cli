@@ -39,12 +39,12 @@ pub fn build_cli() -> App<'static, 'static> {
                          .takes_value(true)
                          .validator(validators::fs::directory)
                          .help("Path to the directory to output the shares to"))
-                    // .arg(Arg::with_name("MIME")
-                    //      .short("m")
-                    //      .long("mime")
-                    //      .takes_value(true)
-                    //      .validator(validators::mime)
-                    //      .help("The MIME type of the secret"))
+                    .arg(Arg::with_name("MIME")
+                         .short("m")
+                         .long("mime")
+                         .takes_value(true)
+                         .validator(validators::mime_type)
+                         .help("The MIME type of the secret"))
                     .arg(Arg::with_name("sign")
                          .short("s")
                          .long("sign")
@@ -66,10 +66,10 @@ pub fn build_cli() -> App<'static, 'static> {
                          .multiple(true)
                          .validator(validators::fs::file)
                          .help("Paths to shares to recover the secret from"))
-                    // .arg(Arg::with_name("MIME")
-                    //      .short("m")
-                    //      .long("mime")
-                    //      .help("Print the MIME type of the secret on stderr"))
+                    .arg(Arg::with_name("mime")
+                         .short("m")
+                         .long("mime")
+                         .help("Include this flag if the shares contain the MIME type of the secret"))
                     .arg(Arg::with_name("verify")
                          .long("verify")
                          .help("Verify the shares signatures"))
@@ -113,9 +113,15 @@ pub mod validators {
 
     }
 
-    // pub fn mime(value: String) -> Result<(), String> {
-    //     Ok(())
-    // }
+    use mime::Mime;
+
+    pub fn mime_type(value: String) -> Result<(), String> {
+        if value.parse::<Mime>().is_err() {
+            return Err(format!("{} is not a valid MIME type", value));
+        }
+
+        Ok(())
+    }
 
     pub mod fs {
 
@@ -177,4 +183,3 @@ pub mod validators {
 
     }
 }
-

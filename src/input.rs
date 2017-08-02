@@ -1,7 +1,7 @@
 
 // https://gist.github.com/ayosec/2ee0993247e003b42c5c
 
-use std::{fs, fmt, io};
+use std::{fmt, fs, io};
 
 #[derive(Debug)]
 pub enum Input {
@@ -39,7 +39,7 @@ impl fmt::Display for Input {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Input::Standard(_) => write!(f, "<stdin>"),
-            Input::File(_, ref path) => write!(f, "{}", path)
+            Input::File(_, ref path) => write!(f, "{}", path),
         }
     }
 }

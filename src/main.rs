@@ -1,7 +1,6 @@
 
 // `error_chain` recursion adjustment
 #![recursion_limit = "1024"]
-
 // Make rustc's built-in lints more strict
 #![warn(warnings)]
 
@@ -13,8 +12,11 @@ extern crate clap;
 #[macro_use]
 extern crate error_chain;
 
+extern crate mime;
+use mime::Mime;
+
 extern crate rusty_secrets;
-use rusty_secrets::sss;
+use rusty_secrets::{sss, wrapped_secrets};
 
 #[macro_use]
 mod verbose;
@@ -64,10 +66,19 @@ fn run() -> Result<()> {
         let n = matches.value_of("n").unwrap().parse::<u8>().unwrap();
         let share_tmpl = matches.value_of("share-tmpl").unwrap_or("share_{{num}}");
         let verbose = matches.is_present("verbose");
-        // let mime = matches.value_of("MIME");
+        let mime_type = matches.value_of("MIME").map(|v| v.parse().unwrap());
         let sign_shares = matches.is_present("sign");
 
-        split(secret_input, output_path, k, n, sign_shares, share_tmpl, verbose)?
+        split(
+            secret_input,
+            output_path,
+            k,
+            n,
+            mime_type,
+            sign_shares,
+            share_tmpl,
+            verbose,
+        )?
     }
     else if let Some(matches) = matches.subcommand_matches("recover") {
         let shares = matches
@@ -79,8 +90,9 @@ fn run() -> Result<()> {
         let output_path = matches.value_of("FILE").map(Path::new);
         let verify_signatures = matches.is_present("verify");
         let verbose = matches.is_present("verbose");
+        let with_mime_type = matches.is_present("mime");
 
-        recover(shares, output_path, verify_signatures, verbose)?
+        recover(shares, output_path, verify_signatures, with_mime_type, verbose)?
     }
 
     Ok(())
@@ -91,7 +103,7 @@ fn split(
     output_path: &Path,
     k: u8,
     n: u8,
-    // mime: Option<&str>,
+    mime_type: Option<Mime>,
     sign_shares: bool,
     share_tmpl: &str,
     verbose: bool,
@@ -111,8 +123,12 @@ fn split(
 
     verbose!(verbose, "Generating shares... ");
 
-    let shares = sss::generate_shares(k, n, &secret, sign_shares)
-        .chain_err(|| "Could not generate shares")?;
+    let shares = match mime_type {
+        Some(mime_type) => wrapped_secrets::generate_shares(k, n, &secret, mime_type.as_ref(), sign_shares)
+            .chain_err(|| "Could not generate shares")?,
+        None => sss::generate_shares(k, n, &secret, sign_shares)
+            .chain_err(|| "Could not generate shares")?,
+    };
 
     for (num, share) in shares.iter().enumerate() {
         let mut path_buf = output_path.to_path_buf();
@@ -122,36 +138,54 @@ fn split(
         verbose!(verbose, "Writing share #{} to {:?}...", num, share_path);
 
         let mut share_file = File::create(share_path)
-            .chain_err(|| ErrorKind::CannotCreateShareFile(format!("{}", share_path.display())))?;
+            .chain_err(|| {
+                ErrorKind::CannotCreateShareFile(format!("{}", share_path.display()))
+            })?;
 
         share_file
             .write_all(share.as_bytes())
-            .chain_err(|| ErrorKind::CannotWriteShareDataToFile(format!("{}", share_path.display())))?;
+            .chain_err(|| {
+                ErrorKind::CannotWriteShareDataToFile(format!("{}", share_path.display()))
+            })?;
     }
 
     Ok(())
 }
 
-fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verify_signatures: bool, verbose: bool) -> Result<()> {
+fn recover(
+    shares_paths: Vec<&Path>,
+    output_path: Option<&Path>,
+    verify_signatures: bool,
+    with_mime_type: bool,
+    verbose: bool
+) -> Result<()> {
     let mut shares = Vec::with_capacity(shares_paths.len());
 
     for share_path in shares_paths {
         if !share_path.exists() {
-            bail!(ErrorKind::ShareDoesNotExists(format!("{}", share_path.display())))
+            bail!(ErrorKind::ShareDoesNotExists(
+                format!("{}", share_path.display())
+            ))
         }
         if !share_path.is_file() {
-            bail!(ErrorKind::ShareIsNotAFile(format!("{}", share_path.display())))
+            bail!(ErrorKind::ShareIsNotAFile(
+                format!("{}", share_path.display())
+            ))
         }
 
         verbose!(verbose, "Reading share {:?}... ", share_path);
 
         let mut share_file = File::open(share_path)
-            .chain_err(|| ErrorKind::CannotOpenShare(format!("{}", share_path.display())))?;
+            .chain_err(|| {
+                ErrorKind::CannotOpenShare(format!("{}", share_path.display()))
+            })?;
 
         let mut share = String::new();
         let size = share_file
             .read_to_string(&mut share)
-            .chain_err(|| ErrorKind::CannotReadShare(format!("{}", share_path.display())))?;
+            .chain_err(|| {
+                ErrorKind::CannotReadShare(format!("{}", share_path.display()))
+            })?;
 
         verbose!(verbose, "  Read {} bytes.", size);
 
@@ -160,16 +194,37 @@ fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verify_signatur
 
     verbose!(verbose, "Recovering secret... ");
 
-    let secret = sss::recover_secret(shares, verify_signatures)
-        .chain_err(|| ErrorKind::CannotRecoverSecret)?;
+    let secret = match with_mime_type {
+        true => {
+            let mut res = wrapped_secrets::recover_secret(shares, verify_signatures)
+                .chain_err(|| ErrorKind::CannotRecoverSecret)?;
+
+            if res.has_version() {
+                verbose!(true, "Version: {:?}", res.get_version());
+            }
+
+            if res.has_mime_type() {
+                verbose!(true, "MIME-Type: {}", res.get_mime_type());
+            }
+
+            res.take_secret()
+        },
+        false =>
+            sss::recover_secret(shares, verify_signatures)
+                .chain_err(|| ErrorKind::CannotRecoverSecret)?
+    };
 
     match output_path {
         Some(output_path) => {
             let mut output_file = File::create(output_path)
-                .chain_err(|| ErrorKind::CannotCreateSecretFile(format!("{}", output_path.display())))?;
+                .chain_err(|| {
+                    ErrorKind::CannotCreateSecretFile(format!("{}", output_path.display()))
+                })?;
             output_file
                 .write_all(&secret)
-                .chain_err(|| ErrorKind::CannotWriteSecretToFile(format!("{}", output_path.display())))?;
+                .chain_err(|| {
+                    ErrorKind::CannotWriteSecretToFile(format!("{}", output_path.display()))
+                })?;
         }
         None => {
             // See https://github.com/romac/rustysecrets-cli/issues/9
