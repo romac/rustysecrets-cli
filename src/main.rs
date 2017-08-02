@@ -175,12 +175,7 @@ fn split(
         path_buf.push(format!("share_{}", i));
         let share_path = path_buf.as_path();
 
-        verbose!(
-            verbose,
-            "Writing share #{} to {:?}...",
-            i,
-            share_path
-        );
+        verbose!(verbose, "Writing share #{} to {:?}...", i, share_path);
 
         let mut share_file = File::create(share_path)
             .chain_err(|| "Could not create share file")?;
@@ -206,27 +201,36 @@ fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verbose: bool) 
 
         verbose!(verbose, "Reading share {:?}... ", share_path);
 
-        let mut share_file = File::open(share_path).chain_err(|| format!("Could not open share {:?}", share_path))?;
+        let mut share_file = File::open(share_path)
+            .chain_err(|| format!("Could not open share {:?}", share_path))?;
         let mut share = String::new();
-        let size = share_file.read_to_string(&mut share).chain_err(|| format!("Could not read share {:?}", share_path))?;
+        let size = share_file
+            .read_to_string(&mut share)
+            .chain_err(|| format!("Could not read share {:?}", share_path))?;
         shares.push(share);
     }
 
     verbose!(verbose, "Recovering secret... ");
 
-    let secret = recover_secret(shares).chain_err(|| "Could not recover secret")?;
+    let secret = recover_secret(shares)
+        .chain_err(|| "Could not recover secret")?;
 
     match output_path {
         Some(output_path) => {
-            let mut output_file = File::create(output_path).chain_err(|| format!("Could not create secret file {:?}", output_path))?;
-            output_file.write_all(&secret).chain_err(|| format!("Could not write secret to file"))?;
-        },
+            let mut output_file = File::create(output_path)
+                .chain_err(|| format!("Could not create secret file {:?}", output_path))?;
+            output_file
+                .write_all(&secret)
+                .chain_err(|| format!("Could not write secret to file"))?;
+        }
         None => {
-            let secret_str = String::from_utf8(secret).chain_err(|| "Could not parse secret as UTF-8, consider outputting it to a file instead")?;
+            let secret_str = String::from_utf8(secret)
+                .chain_err(
+                    || "Could not parse secret as UTF-8, consider outputting it to a file instead",
+                )?;
             println!("{}", secret_str);
         }
     }
 
     Ok(())
 }
-
