@@ -3,13 +3,24 @@ name = "rustysecrets-cli"
 version = "0.1.0"
 authors = ["Romain Ruetschi <romain.ruetschi@gmail.com>"]
 
+description = "rustysecrets-cli is a command-line wrapper around RustySecrets, a Rust implementation of threshold Shamir's secret sharing"
+license = "BSD-3-Clause"
+readme = "README.md"
+homepage = "https://github.com/SpinResearch/rustysecrets-cli"
+documentation = "https://github.com/SpinResearch/rustysecrets-cli#readme"
+repository = "https://github.com/SpinResearch/rustysecrets-cli"
+
+[[bin]]
+name = "rustysecrets"
+path = "src/main.rs"
+
 [dependencies]
 rusty_secrets = "0.0.2"
-clap = "2.26.0"
-colored = "1.5"
+clap = "^2.26.0"
+colored = "^1.5"
 
 [dependencies.error-chain]
-version = "0.10"
+version = "^0.10"
 default-features = false # disable pulling in backtrace
 
 [profile.release]
