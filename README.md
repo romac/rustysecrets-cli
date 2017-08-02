@@ -24,9 +24,12 @@ social control, and diplomatic manipulation. They’re about power.
 $ rustysecrets split secret.txt -o shares -k 7 -n 10
 $ ls shares/
 share_0 share_1 share_2 share_3 share_4 share_5 share_6 share_7 share_8 share_9
-$ rustysecrets recover shares/share_*
+$ rustysecrets recover shares/share_{0-6}
 These programs were never about terrorism: they’re about economic spying,
 social control, and diplomatic manipulation. They’re about power.
+$ rustysecrets recover shares/share_{0-2}
+    error: Could not recover secret
+caused by: Not enough shares provided!
 ```
 
 ## Documentation
