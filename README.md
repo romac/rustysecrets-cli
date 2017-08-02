@@ -34,65 +34,63 @@ caused by: Not enough shares provided!
 
 ## Documentation
 
- ### `$ rustysecrets help`
+### `rustysecrets`
 
 ```
-RustSecrets CLI 0.1
-SpinResearch
-Split a secret of an arbitrary length in n different shares and k-out-of-n shares are required to recover it.
-
 USAGE:
-    rustysecrets [FLAGS] <SUBCOMMAND>
+    rustysecrets <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+SUBCOMMANDS:
+    help       Prints this message or the help of the given subcommand(s)
+    recover    Recover the secret from the shares [aliases: r]
+    split      Split a secret into shares [aliases: s]
+```
+
+### `rustysecrets split`
+
+> Split a secret into shares
+
+```
+USAGE:
+    rustysecrets split [FLAGS] [OPTIONS] <INPUT> --output <DIR> -k <k> -n <n>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
     -v, --verbose    Enable verbose mode
 
-SUBCOMMANDS:
-    help       Prints this message or the help of the given subcommand(s)
-    recover    Recover the secret from the shares
-    split      Split a secret into shares
+OPTIONS:
+    -o, --output <DIR>               Path to the directory to output the shares to
+    -k <k>                           Number of shares necessary to recover the secret
+    -n <n>                           Total number of generated shares
+    -t, --share-tmpl <share-tmpl>    Template for the share names. Defaults to 'share_{{num}}'
+
+ARGS:
+    <INPUT>    Path to the file containing the secret to split, or - to read from stdin
 ```
 
- ### `$ rustysecrets help split`
+### `rustysecrets recover`
+
+> Recover the secret from the shares
 
 ```
-Split a secret into shares
-
 USAGE:
-    rustysecrets split <INPUT> --output <DIR> -k <k> -n <n>
+    rustysecrets recover [FLAGS] [OPTIONS] <SHARES>...
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
+    -v, --verbose    Enable verbose mode
 
 OPTIONS:
-    -o, --output <DIR>    The directory to output the shares to
-    -k <k>                Number of shares necessary to recover the secret
-    -n <n>                Total number of generated shares
+    -o, --output <FILE>    Path to file to output the secret to, prints to stdout if omitted
 
 ARGS:
-    <INPUT>    The file containing the secret to split
-```
-
-### `$ rustysecrets help recover`
-
-```
-Recover the secret from the shares
-
-USAGE:
-    rustysecrets recover [OPTIONS] <SHARES>...
-
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
-OPTIONS:
-    -o, --output <FILE>    The file to output the secret to, printed on stdout otherwise
-
-ARGS:
-    <SHARES>...    The shares to recover the secret from
+    <SHARES>...    Paths to shares to recover the secret from
 ```
 
 ## Bug Reporting
