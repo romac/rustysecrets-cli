@@ -1,9 +1,7 @@
 
 use clap::{App, AppSettings, Arg, SubCommand};
 
-use validators;
-
-pub fn app<'a, 'b>() -> App<'a, 'b> {
+pub fn build_cli() -> App<'static, 'static> {
     App::new("RustySecrets CLI")
         .version("0.2-pre")
         .author("SpinResearch")
@@ -72,3 +70,90 @@ pub fn app<'a, 'b>() -> App<'a, 'b> {
                          .takes_value(true)
                          .help("Path to file to output the secret to, prints to stdout if omitted")))
 }
+
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+pub mod validators {
+
+    pub mod num {
+
+        pub fn strictly_positive(value: String) -> Result<(), String> {
+            let n = value.parse::<u8>();
+
+            if n.is_err() {
+                return Err(format!("{} is not a positive number", value));
+            }
+
+            if n.unwrap() < 1 {
+                return Err(format!("{} is not strictly positive", value));
+            }
+
+            Ok(())
+        }
+
+    }
+
+    // pub fn mime(value: String) -> Result<(), String> {
+    //     Ok(())
+    // }
+
+    pub mod fs {
+
+        use std::path::Path;
+
+        pub fn exists(value: String) -> Result<(), String> {
+            let path = Path::new(&value);
+
+            if !path.exists() {
+                return Err(format!("'{}' does not exists", value));
+            }
+
+            Ok(())
+        }
+
+        // pub fn not_exists(value: String) -> Result<(), String> {
+        //     let path = Path::new(&value);
+
+        //     if path.exists() {
+        //         return Err(format!("'{}' already exists", value));
+        //     }
+
+        //     Ok(())
+        // }
+
+        pub fn file(value: String) -> Result<(), String> {
+            let path = Path::new(&value);
+
+            exists(value.clone())?;
+
+            if !path.is_file() {
+                return Err(format!("'{}' is not a file", value));
+            }
+
+            Ok(())
+        }
+
+        pub fn file_or_stdin(value: String) -> Result<(), String> {
+            if value == "-" {
+                return Ok(());
+            }
+
+            file(value)
+        }
+
+        pub fn directory(value: String) -> Result<(), String> {
+            let path = Path::new(&value);
+
+            if !path.exists() {
+                return Err(format!("'{}' does not exists", value));
+            }
+
+            if !path.is_dir() {
+                return Err(format!("'{}' is not a directory", value));
+            }
+
+            Ok(())
+        }
+
+    }
+}
+

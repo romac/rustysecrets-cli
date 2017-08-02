@@ -25,10 +25,7 @@ use errors::*;
 mod input;
 use input::Input;
 
-mod app;
-use app::app;
-
-mod validators;
+mod cli;
 
 use std::path::Path;
 use std::fs::File;
@@ -52,7 +49,7 @@ fn main() {
 }
 
 fn run() -> Result<()> {
-    let matches = app().get_matches();
+    let matches = cli::build_cli().get_matches();
 
     let verbose = matches.is_present("verbose");
 

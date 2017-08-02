@@ -12,6 +12,8 @@ homepage = "https://github.com/SpinResearch/rustysecrets-cli"
 documentation = "https://github.com/SpinResearch/rustysecrets-cli#readme"
 repository = "https://github.com/SpinResearch/rustysecrets-cli"
 
+build = "build.rs"
+
 [[bin]]
 name = "rustysecrets"
 path = "src/main.rs"
@@ -24,6 +26,9 @@ colored = "^1.5"
 [dependencies.error-chain]
 version = "^0.10"
 default-features = false # disable pulling in backtrace
+
+[build-dependencies]
+clap = "^2.26.0"
 
 [profile.release]
 lto = true
