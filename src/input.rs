@@ -1,7 +1,7 @@
 
 // https://gist.github.com/ayosec/2ee0993247e003b42c5c
 
-use std::{env, fs, io};
+use std::{fs, io};
 
 pub enum Input {
     Standard(io::Stdin),
@@ -17,12 +17,12 @@ impl Input {
         Ok(Input::File(try!(fs::File::open(path))))
     }
 
-    pub fn from_arg(arg: Option<String>) -> io::Result<Input> {
-        Ok(match arg {
-            None => Input::stdin(),
-            Some(path) => try!(Input::file(path)),
-        })
-    }
+    // pub fn from_arg(arg: Option<String>) -> io::Result<Input> {
+    //     Ok(match arg {
+    //         None => Input::stdin(),
+    //         Some(path) => try!(Input::file(path)),
+    //     })
+    // }
 }
 
 impl io::Read for Input {

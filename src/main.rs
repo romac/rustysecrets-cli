@@ -1,6 +1,7 @@
 
 // `error_chain` recursion adjustment
 #![recursion_limit = "1024"]
+
 // Make rustc's built-in lints more strict
 #![warn(warnings)]
 
@@ -17,7 +18,6 @@ use rusty_secrets::*;
 
 #[macro_use]
 mod verbose;
-use verbose::*;
 
 mod errors;
 use errors::*;
@@ -32,7 +32,6 @@ mod validators;
 
 use std::path::Path;
 use std::fs::File;
-use std::io::BufReader;
 use std::io::Read;
 use std::io::Write;
 
@@ -69,10 +68,11 @@ fn run() -> Result<()> {
         let output_path = Path::new(matches.value_of("DIR").unwrap());
         let k = matches.value_of("k").unwrap().parse::<u8>().unwrap();
         let n = matches.value_of("n").unwrap().parse::<u8>().unwrap();
-        let mime = matches.value_of("MIME");
-        let sign = matches.is_present("sign");
+        // let mime = matches.value_of("MIME");
+        // let sign = matches.is_present("sign");
 
-        split(secret_input, output_path, k, n, mime, sign, verbose)?
+        // split(secret_input, output_path, k, n, mime, sign, verbose)?
+        split(secret_input, output_path, k, n, verbose)?
     } else if let Some(matches) = matches.subcommand_matches("recover") {
         let shares = matches
             .values_of("SHARES")
@@ -92,8 +92,8 @@ fn split(
     output_path: &Path,
     k: u8,
     n: u8,
-    mime: Option<&str>,
-    sign: bool,
+    // mime: Option<&str>,
+    // sign: bool,
     verbose: bool,
 ) -> Result<()> {
     if k > n {
@@ -145,10 +145,12 @@ fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verbose: bool) 
 
         let mut share_file = File::open(share_path)
             .chain_err(|| format!("Could not open share {:?}", share_path))?;
+
         let mut share = String::new();
         let size = share_file
             .read_to_string(&mut share)
             .chain_err(|| format!("Could not read share {:?}", share_path))?;
+
         shares.push(share);
     }
 
@@ -163,7 +165,7 @@ fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verbose: bool) 
                 .chain_err(|| format!("Could not create secret file {:?}", output_path))?;
             output_file
                 .write_all(&secret)
-                .chain_err(|| format!("Could not write secret to file"))?;
+                .chain_err(|| "Could not write secret to file")?;
         }
         None => {
             let secret_str = String::from_utf8(secret)

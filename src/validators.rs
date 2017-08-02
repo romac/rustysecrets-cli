@@ -1,4 +1,6 @@
 
+#![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+
 pub mod num {
 
     pub fn strictly_positive(value: String) -> Result<(), String> {
@@ -17,9 +19,9 @@ pub mod num {
 
 }
 
-pub fn mime(value: String) -> Result<(), String> {
-    Ok(())
-}
+// pub fn mime(value: String) -> Result<(), String> {
+//     Ok(())
+// }
 
 pub mod fs {
 
@@ -35,22 +37,20 @@ pub mod fs {
         Ok(())
     }
 
-    pub fn not_exists(value: String) -> Result<(), String> {
-        let path = Path::new(&value);
+    // pub fn not_exists(value: String) -> Result<(), String> {
+    //     let path = Path::new(&value);
 
-        if path.exists() {
-            return Err(format!("'{}' already exists", value));
-        }
+    //     if path.exists() {
+    //         return Err(format!("'{}' already exists", value));
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub fn file(value: String) -> Result<(), String> {
         let path = Path::new(&value);
 
-        if !path.exists() {
-            return Err(format!("'{}' does not exists", value));
-        }
+        exists(value.clone())?;
 
         if !path.is_file() {
             return Err(format!("'{}' is not a file", value));
