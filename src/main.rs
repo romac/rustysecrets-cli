@@ -37,14 +37,14 @@ use std::io::Write;
 
 fn main() {
     if let Err(ref e) = run() {
-        println!("{} {}", "    error:".red().bold(), e);
+        eprintln!("{} {}", "    error:".red().bold(), e);
 
         for e in e.iter().skip(1) {
-            println!("{} {}", "caused by:".yellow().bold(), e);
+            eprintln!("{} {}", "caused by:".yellow().bold(), e);
         }
 
         if let Some(backtrace) = e.backtrace() {
-            println!("{} {:?}", "backtrace:".blue().bold(), backtrace);
+            eprintln!("{} {:?}", "backtrace:".blue().bold(), backtrace);
         }
 
         ::std::process::exit(1);
