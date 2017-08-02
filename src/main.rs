@@ -107,6 +107,8 @@ fn split(
         .read_to_end(&mut secret)
         .chain_err(|| "Could not read secret")?;
 
+    verbose!(verbose, "  Read {} bytes.", size);
+
     verbose!(verbose, "Generating shares... ");
 
     let shares = generate_shares(k, n, &secret)
@@ -150,6 +152,8 @@ fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verbose: bool) 
         let size = share_file
             .read_to_string(&mut share)
             .chain_err(|| format!("Could not read share {:?}", share_path))?;
+
+        verbose!(verbose, "  Read {} bytes.", size);
 
         shares.push(share);
     }
