@@ -62,12 +62,13 @@ fn run() -> Result<()> {
         let output_path = Path::new(matches.value_of("DIR").unwrap());
         let k = matches.value_of("k").unwrap().parse::<u8>().unwrap();
         let n = matches.value_of("n").unwrap().parse::<u8>().unwrap();
+        let share_tmpl = matches.value_of("share-tmpl").unwrap_or("share_{{num}}");
         let verbose = matches.is_present("verbose");
         // let mime = matches.value_of("MIME");
         // let sign = matches.is_present("sign");
 
         // split(secret_input, output_path, k, n, mime, sign, verbose)?
-        split(secret_input, output_path, k, n, verbose)?
+        split(secret_input, output_path, k, n, share_tmpl, verbose)?
     } else if let Some(matches) = matches.subcommand_matches("recover") {
         let shares = matches
             .values_of("SHARES")
@@ -88,6 +89,7 @@ fn split(
     output_path: &Path,
     k: u8,
     n: u8,
+    share_tmpl: &str,
     // mime: Option<&str>,
     // sign: bool,
     verbose: bool,
@@ -110,12 +112,12 @@ fn split(
     let shares = generate_shares(k, n, &secret)
         .chain_err(|| "Could not generate shares")?;
 
-    for (i, share) in shares.iter().enumerate() {
+    for (num, share) in shares.iter().enumerate() {
         let mut path_buf = output_path.to_path_buf();
-        path_buf.push(format!("share_{}", i));
+        path_buf.push(share_tmpl.replace("{{num}}", &format!("{}", num)));
         let share_path = path_buf.as_path();
 
-        verbose!(verbose, "Writing share #{} to {:?}...", i, share_path);
+        verbose!(verbose, "Writing share #{} to {:?}...", num, share_path);
 
         let mut share_file = File::create(share_path)
             .chain_err(|| ErrorKind::CannotCreateShareFile(format!("{}", share_path.display())))?;
