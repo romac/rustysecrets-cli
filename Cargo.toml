@@ -1,0 +1,17 @@
+[package]
+name = "rustysecrets-cli"
+version = "0.1.0"
+authors = ["Romain Ruetschi <romain.ruetschi@gmail.com>"]
+
+[dependencies]
+rusty_secrets = "0.0.2"
+clap = "2.26.0"
+colored = "1.5"
+
+[dependencies.error-chain]
+version = "0.10"
+default-features = false # disable pulling in backtrace
+
+[profile.release]
+lto = true
+
