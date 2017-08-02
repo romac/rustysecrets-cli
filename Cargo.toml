@@ -29,7 +29,7 @@ default-features = false # disable pulling in backtrace
 lto = true
 
 [package.metadata.release]
-sign-commit = true
+sign-commit = false # TODO: Change this to true once we're out of alpha
 upload-doc = false
 pre-release-commit-message = "Release version {{version}}"
 pro-release-commit-message = "Bump version to {{version}}"
