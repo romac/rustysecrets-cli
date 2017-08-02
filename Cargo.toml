@@ -22,10 +22,7 @@ path = "src/main.rs"
 rusty_secrets = "0.0.2"
 clap = "^2.26.0"
 colored = "^1.5"
-
-[dependencies.error-chain]
-version = "^0.10"
-default-features = false # disable pulling in backtrace
+error-chain = "=0.11.0-rc.2"
 
 [build-dependencies]
 clap = "^2.26.0"
