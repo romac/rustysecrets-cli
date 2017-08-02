@@ -59,6 +59,14 @@ pub mod fs {
         Ok(())
     }
 
+    pub fn file_or_stdin(value: String) -> Result<(), String> {
+        if value == "-" {
+            return Ok(());
+        }
+
+        file(value)
+    }
+
     pub fn directory(value: String) -> Result<(), String> {
         let path = Path::new(&value);
 

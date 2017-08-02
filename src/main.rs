@@ -23,6 +23,9 @@ use verbose::*;
 mod errors;
 use errors::*;
 
+mod input;
+use input::Input;
+
 mod validators;
 
 use std::path::Path;
@@ -78,7 +81,7 @@ fn run() -> Result<()> {
                              .required(true)
                              .takes_value(true)
                              .validator(validators::fs::directory)
-                             .help("The directory to output the shares to"))
+                             .help("Path to the directory to output the shares to"))
                         // .arg(Arg::with_name("MIME")
                         //      .short("m")
                         //      .long("mime")
@@ -91,8 +94,8 @@ fn run() -> Result<()> {
                         //      .help("Sign the shares"))
                         .arg(Arg::with_name("INPUT")
                              .required(true)
-                             .validator(validators::fs::file)
-                             .help("The file containing the secret to split")))
+                             .validator(validators::fs::file_or_stdin)
+                             .help("Path to the file containing the secret to split, or - to read from stdin")))
             .subcommand(SubCommand::with_name("recover")
                         .about("Recover the secret from the shares")
                         .arg(Arg::with_name("SHARES")
@@ -100,7 +103,7 @@ fn run() -> Result<()> {
                              .takes_value(true)
                              .multiple(true)
                              .validator(validators::fs::file)
-                             .help("The shares to recover the secret from"))
+                             .help("Paths to shares to recover the secret from"))
                         // .arg(Arg::with_name("MIME")
                         //      .short("m")
                         //      .long("mime")
@@ -113,21 +116,28 @@ fn run() -> Result<()> {
                              .short("o")
                              .long("output")
                              .takes_value(true)
-                             .help("The file to output the secret to, printed on stdout otherwise")));
+                             .help("Path to file to output the secret to, prints to stdout if omitted")));
 
     let matches = app.get_matches();
 
     let verbose = matches.is_present("verbose");
 
     if let Some(matches) = matches.subcommand_matches("split") {
-        let secret_path = Path::new(matches.value_of("INPUT").unwrap());
+        let secret_arg = matches.value_of("INPUT").unwrap();
+        let secret_input = if secret_arg == "-" {
+            Input::stdin()
+        } else {
+            Input::file(secret_arg.to_string())
+                .chain_err(|| format!("Could not open secret file \"{}\"", secret_arg))?
+        };
+
         let output_path = Path::new(matches.value_of("DIR").unwrap());
         let k = matches.value_of("k").unwrap().parse::<u8>().unwrap();
         let n = matches.value_of("n").unwrap().parse::<u8>().unwrap();
         let mime = matches.value_of("MIME");
         let sign = matches.is_present("sign");
 
-        split(secret_path, output_path, k, n, mime, sign, verbose)?
+        split(secret_input, output_path, k, n, mime, sign, verbose)?
     } else if let Some(matches) = matches.subcommand_matches("recover") {
         let shares = matches
             .values_of("SHARES")
@@ -143,7 +153,7 @@ fn run() -> Result<()> {
 }
 
 fn split(
-    secret_path: &Path,
+    mut secret_input: Input,
     output_path: &Path,
     k: u8,
     n: u8,
@@ -155,13 +165,10 @@ fn split(
         bail!("k must be smaller than or equal to n")
     }
 
+    verbose!(verbose, "Reading secret...");
+
     let mut secret = Vec::new();
-    let mut secret_file = File::open(secret_path)
-        .chain_err(|| "Could not open secret file")?;
-
-    verbose!(verbose, "Reading secret {:?}... ", secret_path);
-
-    let size = secret_file
+    let size = secret_input
         .read_to_end(&mut secret)
         .chain_err(|| "Could not read secret")?;
 
