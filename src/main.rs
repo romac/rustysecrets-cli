@@ -29,8 +29,7 @@ mod cli;
 
 use std::path::Path;
 use std::fs::File;
-use std::io::Read;
-use std::io::Write;
+use std::io::{self, Read, Write};
 
 fn main() {
     if let Err(ref e) = run() {
@@ -169,11 +168,13 @@ fn recover(shares_paths: Vec<&Path>, output_path: Option<&Path>, verbose: bool) 
                 .chain_err(|| "Could not write secret to file")?;
         }
         None => {
-            let secret_str = String::from_utf8(secret)
-                .chain_err(
-                    || "Could not parse secret as UTF-8, consider outputting it to a file instead",
-                )?;
-            println!("{}", secret_str);
+            // See https://github.com/romac/rustysecrets-cli/issues/9
+            // let secret_str = String::from_utf8(secret)
+            //     .chain_err(|| "Could not parse secret as UTF-8, consider outputting it to a file instead")?;
+
+            io::stdout()
+                .write_all(&secret)
+                .chain_err(|| "Could not write output to stdout")?;
         }
     }
 
