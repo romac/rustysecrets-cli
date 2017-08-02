@@ -50,8 +50,6 @@ fn main() {
 fn run() -> Result<()> {
     let matches = cli::build_cli().get_matches();
 
-    let verbose = matches.is_present("verbose");
-
     if let Some(matches) = matches.subcommand_matches("split") {
         let secret_arg = matches.value_of("INPUT").unwrap();
         let secret_input = if secret_arg == "-" {
@@ -64,6 +62,7 @@ fn run() -> Result<()> {
         let output_path = Path::new(matches.value_of("DIR").unwrap());
         let k = matches.value_of("k").unwrap().parse::<u8>().unwrap();
         let n = matches.value_of("n").unwrap().parse::<u8>().unwrap();
+        let verbose = matches.is_present("verbose");
         // let mime = matches.value_of("MIME");
         // let sign = matches.is_present("sign");
 
@@ -76,6 +75,7 @@ fn run() -> Result<()> {
             .map(Path::new)
             .collect();
         let output_path = matches.value_of("FILE").map(Path::new);
+        let verbose = matches.is_present("verbose");
 
         recover(shares, output_path, verbose)?
     }
