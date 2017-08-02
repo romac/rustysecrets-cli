@@ -1,11 +1,12 @@
 
 // https://gist.github.com/ayosec/2ee0993247e003b42c5c
 
-use std::{fs, io};
+use std::{fs, fmt, io};
 
+#[derive(Debug)]
 pub enum Input {
     Standard(io::Stdin),
-    File(fs::File),
+    File(fs::File, String),
 }
 
 impl Input {
@@ -14,7 +15,7 @@ impl Input {
     }
 
     pub fn file(path: String) -> io::Result<Input> {
-        Ok(Input::File(try!(fs::File::open(path))))
+        Ok(Input::File(try!(fs::File::open(path.clone())), path))
     }
 
     // pub fn from_arg(arg: Option<String>) -> io::Result<Input> {
@@ -29,7 +30,16 @@ impl io::Read for Input {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         match *self {
             Input::Standard(ref mut s) => s.read(buf),
-            Input::File(ref mut f) => f.read(buf),
+            Input::File(ref mut f, _) => f.read(buf),
+        }
+    }
+}
+
+impl fmt::Display for Input {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Input::Standard(_) => write!(f, "<stdin>"),
+            Input::File(_, ref path) => write!(f, "{}", path)
         }
     }
 }
