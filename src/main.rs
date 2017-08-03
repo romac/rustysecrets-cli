@@ -79,8 +79,7 @@ fn run() -> Result<()> {
             share_tmpl,
             verbose,
         )?
-    }
-    else if let Some(matches) = matches.subcommand_matches("recover") {
+    } else if let Some(matches) = matches.subcommand_matches("recover") {
         let shares = matches
             .values_of("SHARES")
             .unwrap()
@@ -92,7 +91,13 @@ fn run() -> Result<()> {
         let verbose = matches.is_present("verbose");
         let with_mime_type = matches.is_present("mime");
 
-        recover(shares, output_path, verify_signatures, with_mime_type, verbose)?
+        recover(
+            shares,
+            output_path,
+            verify_signatures,
+            with_mime_type,
+            verbose,
+        )?
     }
 
     Ok(())
@@ -157,7 +162,7 @@ fn recover(
     output_path: Option<&Path>,
     verify_signatures: bool,
     with_mime_type: bool,
-    verbose: bool
+    verbose: bool,
 ) -> Result<()> {
     let mut shares = Vec::with_capacity(shares_paths.len());
 
@@ -208,10 +213,9 @@ fn recover(
             }
 
             res.take_secret()
-        },
-        false =>
-            sss::recover_secret(shares, verify_signatures)
-                .chain_err(|| ErrorKind::CannotRecoverSecret)?
+        }
+        false => sss::recover_secret(shares, verify_signatures)
+            .chain_err(|| ErrorKind::CannotRecoverSecret)?,
     };
 
     match output_path {

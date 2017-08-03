@@ -19,4 +19,3 @@ fn main() {
     app.gen_completions("rustysecrets", Shell::Fish, &outdir);
     app.gen_completions("rustysecrets", Shell::PowerShell, &outdir);
 }
-
